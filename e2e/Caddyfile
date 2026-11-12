@@ -1,0 +1,24 @@
+{
+	acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+	admin off
+	http_port 18080
+	https_port 18443
+
+	storage file_system {
+		root {$E2E_STORAGE}
+	}
+
+	log {
+		output file {$E2E_LOG}
+		format json
+	}
+}
+
+{$E2E_HOST}, {$E2E_WILDCARD} {
+	tls {
+		dns domainchief {env.DOMAINCHIEF_API_TOKEN}
+		propagation_delay 60s
+	}
+
+	respond "ok"
+}

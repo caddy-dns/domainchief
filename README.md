@@ -116,6 +116,22 @@ The certificate authority also caches a missing record for up to 5 minutes, so w
 
 The domain does not use Domain Chief hosted DNS, so the challenge record cannot be published.
 
+## Testing
+
+The unit tests cover the configuration parsing:
+
+```bash
+go test ./...
+```
+
+The end-to-end test builds Caddy with this module using [`xcaddy`](https://github.com/caddyserver/xcaddy) and obtains two certificates from Let's Encrypt staging, one for a host and one for a wildcard below it. It needs a token with the `domainchief:acme:write` scope and a domain that uses hosted DNS:
+
+```bash
+DOMAINCHIEF_API_TOKEN=ctt_... DOMAINCHIEF_TEST_ZONE=example.com ./e2e/run.sh
+```
+
+CI runs the end-to-end test on pushes to `master` when the `DOMAINCHIEF_TEST_ZONE` repository variable and `DOMAINCHIEF_API_TOKEN` repository secret are set.
+
 ## Details
 
 See the [libdns provider](https://github.com/libdns/domainchief) for how records are managed.
