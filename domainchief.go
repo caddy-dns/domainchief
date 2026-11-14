@@ -25,8 +25,13 @@ func (Provider) CaddyModule() caddy.ModuleInfo {
 }
 
 // Provision resolves placeholders in the configuration. Implements caddy.Provisioner.
+//
+// It also makes publishing ACME challenges wait until every nameserver serves them. Caddy only checks the
+// nameservers it can reach, which can serve a value before the certificate authority's nameservers do.
 func (p *Provider) Provision(_ caddy.Context) error {
 	replacer := caddy.NewReplacer()
+
+	p.WaitForPublication = true
 
 	p.APIToken = replacer.ReplaceAll(p.APIToken, "")
 	p.BaseURL = replacer.ReplaceAll(p.BaseURL, "")

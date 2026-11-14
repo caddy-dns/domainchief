@@ -17,7 +17,6 @@
 {$E2E_HOST}, {$E2E_WILDCARD} {
 	tls {
 		dns domainchief {env.DOMAINCHIEF_API_TOKEN}
-		propagation_delay 60s
 	}
 
 	respond "ok"

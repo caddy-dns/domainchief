@@ -35,14 +35,13 @@ Use the provider for a site:
 example.com, *.example.com {
 	tls {
 		dns domainchief {env.DOMAINCHIEF_API_TOKEN}
-		propagation_delay 60s
 	}
 }
 ```
 
-We recommend setting [`propagation_delay`](https://caddyserver.com/docs/caddyfile/directives/tls#propagation_delay). Domain Chief serves hosted DNS from nameservers in many locations, and a new challenge record reaches all of them shortly after it reaches the ones closest to you. Caddy only checks the nameservers it can reach before asking the certificate authority to validate, so without a delay the certificate authority can still query a location that does not have the record yet.
+Domain Chief serves hosted DNS from nameservers in many locations, and a new challenge record reaches the ones closest to you before it reaches the others. Caddy only checks the nameservers it can reach, so the module waits until Domain Chief reports that every nameserver serves the challenge before Caddy asks the certificate authority to validate. This usually takes one to three minutes per certificate, so you don't need to set [`propagation_delay`](https://caddyserver.com/docs/caddyfile/directives/tls#propagation_delay).
 
-You can also set the provider for all sites. The global option does not accept `propagation_delay`, so prefer the `tls` directive above:
+You can also set the provider for all sites:
 
 ```caddyfile
 {
@@ -70,8 +69,7 @@ You can put the token directly in the config instead of the `{env.DOMAINCHIEF_AP
 			"provider": {
 				"name": "domainchief",
 				"api_token": "{env.DOMAINCHIEF_API_TOKEN}"
-			},
-			"propagation_delay": "60s"
+			}
 		}
 	}
 }
@@ -88,29 +86,13 @@ The environment variable holding the token is not set for the Caddy process. Whe
 Environment=DOMAINCHIEF_API_TOKEN=ctt_...
 ```
 
-### `timed out waiting for record to fully propagate`
+### `ACME challenge … is not served by every nameserver after 10m0s`
 
-Domain Chief publishes challenge records to the hosted DNS nameservers asynchronously, which usually takes less than a minute. Caddy waits up to 2 minutes by default. Raise the limit with the [`propagation_timeout`](https://caddyserver.com/docs/caddyfile/directives/tls#propagation_timeout) option if validation times out:
+Other changes to the same domain's hosted DNS kept delaying the challenge record. The module deletes the record and Caddy retries the certificate later. Avoid changing the domain's DNS records while certificates are being issued.
 
-```caddyfile
-tls {
-	dns domainchief {env.DOMAINCHIEF_API_TOKEN}
-	propagation_timeout 5m
-}
-```
+### `ACME challenge … could not be added to the hosted DNS zone`
 
-### `NXDOMAIN looking up TXT for _acme-challenge…` or `No TXT record found`
-
-The certificate authority queried a nameserver location that did not have the challenge record yet. Set or raise [`propagation_delay`](https://caddyserver.com/docs/caddyfile/directives/tls#propagation_delay) so Caddy waits before validation starts:
-
-```caddyfile
-tls {
-	dns domainchief {env.DOMAINCHIEF_API_TOKEN}
-	propagation_delay 2m
-}
-```
-
-The certificate authority also caches a missing record for up to 5 minutes, so wait at least that long before retrying a failed validation for the same name.
+Domain Chief could not publish the challenge record. The module deletes the record and Caddy retries the certificate later.
 
 ### `dns.not_hosted`
 

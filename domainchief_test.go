@@ -64,6 +64,18 @@ func TestProvisionResolvesEnvironmentPlaceholders(t *testing.T) {
 	}
 }
 
+func TestProvisionWaitsForACMEChallengesToBePublished(t *testing.T) {
+	provider := Provider{&domainchief.Provider{APIToken: "ctt_token"}}
+
+	if err := provider.Provision(caddy.Context{}); err != nil {
+		t.Fatal(err)
+	}
+
+	if !provider.WaitForPublication {
+		t.Error("expected publishing ACME challenges to wait until every nameserver serves them")
+	}
+}
+
 func TestProvisionFailsWhenTheTokenResolvesToEmpty(t *testing.T) {
 	provider := Provider{&domainchief.Provider{APIToken: "{env.DOMAINCHIEF_UNSET_TOKEN}"}}
 
